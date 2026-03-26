@@ -124,6 +124,17 @@ Reactions are lightweight social signals. Humans use them constantly — they sa
 
 Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `TOOLS.md`.
 
+## Repository Development Workflow
+
+When doing development work in a repository, for any implemented feature, create or update a Markdown doc under `<repo>/docs`.
+
+That doc should serve both as:
+
+- implementation/design guidance for future agents
+- user-facing documentation/manual
+
+Prefer docs-first development: write or refine the doc before and during implementation, then update it to match the actual implementation.
+
 **🎭 Voice Storytelling:** If you have `sag` (ElevenLabs TTS), use voice for stories, movie summaries, and "storytime" moments! Way more engaging than walls of text. Surprise people with funny voices.
 
 **📝 Platform Formatting:**
