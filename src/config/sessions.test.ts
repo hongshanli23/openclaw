@@ -584,7 +584,7 @@ describe("sessions", () => {
     );
   });
 
-  it("resolves cross-agent paths when OPENCLAW_STATE_DIR differs from stored paths", () => {
+  it("re-homes cross-agent paths when OPENCLAW_STATE_DIR differs from stored paths", () => {
     withStateDir(path.resolve("/different/state"), () => {
       const originalBase = path.resolve("/original/state");
       const bot2Session = path.join(originalBase, "agents", "bot2", "sessions", "sess-1.jsonl");
@@ -594,7 +594,32 @@ describe("sessions", () => {
         { sessionFile: bot2Session },
         { agentId: "bot1" },
       );
-      expect(sessionFile).toBe(bot2Session);
+      expect(sessionFile).toBe(
+        path.join(path.resolve("/different/state"), "agents", "bot2", "sessions", "sess-1.jsonl"),
+      );
+    });
+  });
+
+  it("migrates stale state-rooted session paths when loading the store", async () => {
+    const { storePath } = await createSessionStoreFixture({
+      prefix: "migrate-stale-state-paths",
+      entries: {
+        "agent:dev:main": {
+          sessionId: "sess-1",
+          updatedAt: 123,
+          sessionFile: "/home/node/.openclaw/agents/dev/sessions/sess-1.jsonl",
+          workspaceDir: "/home/node/.openclaw/workspace-dev",
+          spawnedWorkspaceDir: "/home/node/.openclaw/workspace-dev",
+        },
+      },
+    });
+
+    withStateDir(path.resolve("/home/appuser/.openclaw"), () => {
+      const store = loadSessionStore(storePath) as unknown as Record<string, Record<string, string>>;
+      const entry = store["agent:dev:main"] ?? {};
+      expect(entry.sessionFile).toBe("/home/appuser/.openclaw/agents/dev/sessions/sess-1.jsonl");
+      expect(entry.workspaceDir).toBe("/home/appuser/.openclaw/workspace-dev");
+      expect(entry.spawnedWorkspaceDir).toBe("/home/appuser/.openclaw/workspace-dev");
     });
   });
 
