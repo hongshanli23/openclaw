@@ -615,7 +615,10 @@ describe("sessions", () => {
     });
 
     withStateDir(path.resolve("/home/appuser/.openclaw"), () => {
-      const store = loadSessionStore(storePath) as unknown as Record<string, Record<string, string>>;
+      const store = loadSessionStore(storePath) as unknown as Record<
+        string,
+        Record<string, string>
+      >;
       const entry = store["agent:dev:main"] ?? {};
       expect(entry.sessionFile).toBe("/home/appuser/.openclaw/agents/dev/sessions/sess-1.jsonl");
       expect(entry.workspaceDir).toBe("/home/appuser/.openclaw/workspace-dev");
