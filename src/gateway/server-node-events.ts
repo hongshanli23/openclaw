@@ -154,6 +154,7 @@ async function touchSessionStore(params: {
       store,
     });
     store[primaryKey] = {
+      ...store[primaryKey],
       sessionId: params.sessionId,
       updatedAt: params.now,
       thinkingLevel: params.entry?.thinkingLevel,
@@ -164,6 +165,8 @@ async function touchSessionStore(params: {
       sendPolicy: params.entry?.sendPolicy,
       lastChannel: params.entry?.lastChannel,
       lastTo: params.entry?.lastTo,
+      lastAccountId: params.entry?.lastAccountId,
+      lastThreadId: params.entry?.lastThreadId,
     };
   });
 }

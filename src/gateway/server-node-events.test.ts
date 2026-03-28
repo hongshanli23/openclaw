@@ -8,7 +8,12 @@ const buildSessionLookup = (
     sessionId?: string;
     lastChannel?: string;
     lastTo?: string;
+    lastAccountId?: string;
+    lastThreadId?: string | number;
     updatedAt?: number;
+    label?: string;
+    spawnedBy?: string;
+    parentSessionKey?: string;
   } = {},
 ): ReturnType<typeof loadSessionEntryType> => ({
   cfg: { session: { mainKey: "agent:main:main" } } as OpenClawConfig,
@@ -19,6 +24,11 @@ const buildSessionLookup = (
     updatedAt: entry.updatedAt ?? Date.now(),
     lastChannel: entry.lastChannel,
     lastTo: entry.lastTo,
+    lastAccountId: entry.lastAccountId,
+    lastThreadId: entry.lastThreadId,
+    label: entry.label,
+    spawnedBy: entry.spawnedBy,
+    parentSessionKey: entry.parentSessionKey,
   },
   canonicalKey: sessionKey,
   legacyKey: undefined,
@@ -459,6 +469,64 @@ describe("voice transcript events", () => {
 
     expect(agentCommandMock).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("voice session-store update failed"));
+  });
+
+  it("preserves existing session metadata when touching the store for voice transcripts", async () => {
+    const ctx = buildCtx();
+    loadSessionEntryMock.mockImplementation((sessionKey: string) =>
+      buildSessionLookup(sessionKey, {
+        sessionId: "sess-preserve",
+        updatedAt: 10,
+        label: "existing label",
+        spawnedBy: "agent:main:parent",
+        parentSessionKey: "agent:main:parent",
+        lastChannel: "discord",
+        lastTo: "thread-1",
+        lastAccountId: "acct-1",
+        lastThreadId: 42,
+      }),
+    );
+
+    let updatedStore: Record<string, unknown> | undefined;
+    updateSessionStoreMock.mockImplementationOnce(async (_storePath, update) => {
+      const store = {
+        "voice-preserve-session": {
+          sessionId: "sess-preserve",
+          updatedAt: 10,
+          label: "existing label",
+          spawnedBy: "agent:main:parent",
+          parentSessionKey: "agent:main:parent",
+          lastChannel: "discord",
+          lastTo: "thread-1",
+          lastAccountId: "acct-1",
+          lastThreadId: 42,
+        },
+      };
+      update(store);
+      updatedStore = structuredClone(store);
+    });
+
+    await handleNodeEvent(ctx, "node-v4", {
+      event: "voice.transcript",
+      payloadJSON: JSON.stringify({
+        text: "preserve metadata",
+        sessionKey: "voice-preserve-session",
+      }),
+    });
+    await Promise.resolve();
+
+    expect(updatedStore).toMatchObject({
+      "voice-preserve-session": {
+        sessionId: "sess-preserve",
+        label: "existing label",
+        spawnedBy: "agent:main:parent",
+        parentSessionKey: "agent:main:parent",
+        lastChannel: "discord",
+        lastTo: "thread-1",
+        lastAccountId: "acct-1",
+        lastThreadId: 42,
+      },
+    });
   });
 });
 
